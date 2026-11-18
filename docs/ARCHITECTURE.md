@@ -1,44 +1,25 @@
 # Architecture
 
-NEMUNEMU is an ordinary Linux userspace compatibility layer. NERU builds
-one Linux image ahead of time, installs NEMUNEMU in it and boots that same
-image from both terminal and browser hosts.
+Nemunemu runs in Linux userspace. It loads THX executables and translates
+guest operations to the Linux interfaces available to the runtime.
 
 ```text
-mikuOS userland tree
-        |
-        |  NERU ahead-of-time image build
-        v
-Linux initramfs containing the unchanged userland contract
-        |
-        v
-NEMUNEMU compatibility layer
-        |                         |
-        | THX1 / THX2             | #!thistle:<command>
-        v                         v
-Thistle interpreter        Linux compatibility applet
-        \_________________________/
-                    |
-                    v
-             NERU Linux kernel
+THX1 / THX2          #!thistle:<command>
+     |                       |
+ guest execution      compatibility applet
+     |                       |
+     +------ Linux ABI ------+
+                |
+          Linux kernel
 ```
 
-NEMUNEMU owns:
+THX loading validates the executable and creates machine state for its
+instruction profile. Compatibility applets handle the supported script
+markers. Both paths use the supplied filesystem and Linux process services.
 
-- THX validation and Thistle32/Thistle64 execution;
-- translation of the Thistle syscall ABI to Linux;
-- resolution of packaged mikuOS command contracts;
-- entering the packaged userland root and starting its shell contract.
+When launched as Linux init, Nemunemu supervises and reaps its shell process.
+Root mounting, kernel construction and host integration are responsibilities
+of the boot environment, not this runtime. The pinned Thistle checkout is
+used to generate opcode and syscall definitions; see [development](DEVELOPMENT.md).
 
-NERU owns:
-
-- selecting and building Linux-WASM;
-- staging the mikuOS userland without modifying its source tree;
-- preparing Linux-executable wrappers in the packaged copy;
-- initramfs construction and CLI/browser kernel integration.
-
-The compatibility layer does not create a second mikuOS implementation.
-The normal Thistle and Teto roots and the NERU image all originate from the
-same mikuOS userland tree.
-
-`uname` inside NERU reports `Linux` and the actual built Linux release.
+`uname` reports the running Linux kernel identity.

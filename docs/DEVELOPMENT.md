@@ -1,24 +1,21 @@
 # Development
 
-NEMUNEMU is C17 so the same execution core can be compiled for ordinary
-Linux and the Linux-WASM musl userspace.
+Nemunemu uses C17 for ordinary Linux and Linux-WASM userspace builds.
+The pinned Thistle checkout supplies opcode and syscall definitions.
+Regenerate the ABI header after changing that pin:
 
-Do not duplicate Thistle opcode or syscall values manually. Run:
-
-```bash
+```sh
 python3 scripts/generate-abi.py
+python3 scripts/generate-abi.py --check
 ```
 
-after changing the pinned Thistle revision, then commit the regenerated
-header. CI runs the same command with `--check`.
+Build and test the native runtime:
 
-Native changes must pass:
-
-```bash
+```sh
 cmake -S . -B build
-cmake --build build
+cmake --build build --parallel 2
 ctest --test-dir build --output-on-failure
 ```
 
-Changes touching parsing, memory, or execution must also pass ASan and
-UBSan. Kernel and host-runtime code belongs in NERU, not this repository.
+Run the address and undefined-behaviour sanitiser checks for changes to
+parsing, memory or execution.
